@@ -13,6 +13,7 @@ import re
 phone_chosen = input("What phone are you looking for? ").lower()
 phone_chosen_amended = phone_chosen.replace(" ", "_")
 phone_model_key = phone_chosen.replace(" ", "-").upper()
+print(phone_chosen_amended)
 
 url = "https://www.gsmarena.com/"
 
@@ -22,7 +23,7 @@ driver = webdriver.Chrome(executable_path=chrome_driver_path)
 # -------------------------------------- Finding device page -----------------------------------------------#
 
 driver.get(url)
-time.sleep(5)
+time.sleep(7)
 
 # If a popup appears that requests you to accept cookies, this will accept, if it doesn't appear this step will skip.
 try:
@@ -38,7 +39,7 @@ search = driver.find_element(by=By.XPATH, value='//*[@id="topsearch-text"]')
 search.send_keys(phone_chosen)
 search.send_keys(Keys.ENTER)
 
-time.sleep(3)
+time.sleep(5)
 
 try:
     phone_link = driver.find_element(by=By.CSS_SELECTOR, value=f"a[href*={phone_chosen_amended}-]")
@@ -53,11 +54,14 @@ time.sleep(3)
 # ------------------------ All config for devices ---------------------------------------------------#
 
 # -------------------------------------- 5g -----------------------------------------------#
-
-if "5G" in driver.find_element(by=By.XPATH, value='//*[@id="specs-list"]/table[1]/tbody/tr[1]/td[2]/a').text:
-    five_g = 1
-    five_g_vector = "Ready for super-fast <strong>5G</strong> data"
-else:
+try:
+    if "5G" in driver.find_element(by=By.XPATH, value='//*[@id="specs-list"]/table[1]/tbody/tr[1]/td[2]/a').text:
+        five_g = 1
+        five_g_vector = "Ready for super-fast <strong>5G</strong> data"
+    else:
+        five_g = 0
+        five_g_vector = ""
+except NoSuchElementException:
     five_g = 0
     five_g_vector = ""
 
@@ -247,6 +251,8 @@ try:
     main_camera_aperture = re.search('[f][/][0-9][.][0-9]', ois_data).group()
 except NoSuchElementException:
     main_camera_aperture = ""
+except AttributeError:
+    main_camera_aperture = ""
 
 # -------------------------------------- Pixel Size  -------------------------------------------#
 
@@ -254,15 +260,20 @@ try:
     pixel_size = re.search('[0-9][.][0-9][µ][m]', ois_data).group()[:-2]
 except NoSuchElementException:
     pixel_size = ""
+except AttributeError:
+    pixel_size = ""
 
 # -------------------------------------- Video Recording  -------------------------------------------#
 
 # Gets information on the video recoding for the all handset database
-
-video_recording = driver.find_element(
-    by=By.XPATH,
-    value='//*[@id="specs-list"]/table[7]/tbody/tr[3]/td[2]').text.split(",")[0]
-
+try:
+    video_recording = driver.find_element(
+        by=By.XPATH,
+        value='//*[@id="specs-list"]/table[7]/tbody/tr[3]/td[2]').text.split(",")[0]
+except NoSuchElementException:
+    video_recording = driver.find_element(
+        by=By.XPATH,
+        value='//*[@id="specs-list"]/table[7]/tbody/tr[2]/td[2]').text.split(",")[0]
 # Gets numerical data on the video recoding for the attribute model
 
 video_recording_attribute_data = video_recording.split('@')[0].lower()
@@ -370,9 +381,14 @@ for rams in ram_data:
 
 # -------------------------------------- Positioning  -------------------------------------------------------------#
 
-positioning = driver.find_element(
-    by=By.XPATH,
-    value='//*[@id="specs-list"]/table[10]/tbody/tr[3]/td[2]').text.split("with ")[1]
+try:
+    positioning = driver.find_element(
+        by=By.XPATH,
+        value='//*[@id="specs-list"]/table[10]/tbody/tr[3]/td[2]').text.split("with ")[1]
+except IndexError:
+    positioning = driver.find_element(
+        by=By.XPATH,
+        value='//*[@id="specs-list"]/table[10]/tbody/tr[3]/td[2]').text.split("with ")[0]
 
 # -------------------------------------- Radio  -------------------------------------------------------------#
 radio_data = driver.find_element(by=By.XPATH, value='//*[@id="specs-list"]/table[10]/tbody/tr[5]/td[2]').text
